@@ -75,7 +75,7 @@ int main (int argc, char **argv) {
 			if (data.vmareastruct[i] == 0 && data.vmareastruct[i+1] == 0) {
 				break;;
 			}
-			printf ("%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu",
+			printf ("%08lx-%08lx %c%c%c%c %08lx %02x:%02x %lu",
 					data.vmareastruct[i], data.vmareastruct[i+1],
 					data.vmareastruct[i+2] & VM_READ ? 'r' : '-',
 					data.vmareastruct[i+2] & VM_WRITE ? 'w' : '-',
@@ -84,7 +84,7 @@ int main (int argc, char **argv) {
 					data.vmareastruct[i+3], data.vmareastruct[i+4],
 					data.vmareastruct[i+5], data.vmareastruct[i+6]);
 			i += 7;
-			printf ("\t\t\t\t\t\t%s\n", &(data.vmareastruct[i]));
+			printf ("\t\t%s\n", &(data.vmareastruct[i]));
 			i += (strlen(&(data.vmareastruct[i])) - 1 + sizeof (unsigned long)) / sizeof (unsigned long);
 		}
 	} else if (ret == 12) {

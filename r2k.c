@@ -135,7 +135,7 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 					if (stack_guard_page_end (vma, vma->vm_end)) {
 						data->vmareastruct[counter+1] -= PAGE_SIZE;
 					}
-#elif LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,38) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
+#elif LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,38) && LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)       // It should have been  LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) but during testing on squeezy, it failed to worked as expected so changed the condition to 2.6.0 :D
 					if (vma->vm_flags & VM_GROWSDOWN) {
 						if (!vma_stack_continue (vma->vm_prev, vma->vm_start)) {
 							data->vmareastruct[counter] += PAGE_SIZE;
@@ -143,7 +143,7 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 					}
 #endif
 					data->vmareastruct[counter+2] = vma->vm_flags;
-					data->vmareastruct[counter+3] = pgoff;
+					data->vmareastruct[counter+3] = (unsigned long)pgoff; //pgoff == unsigned long long. Keep check for overflow
 					data->vmareastruct[counter+4] = MAJOR(dev);
 					data->vmareastruct[counter+5] = MINOR(dev);
 					data->vmareastruct[counter+6] = ino;
@@ -163,7 +163,7 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 					}
 #endif
 
-					name = (char *)arch_vma_name (vma);
+					//name = (char *)arch_vma_name (vma); // Commenting temporarily. Find a fix.
 					if (!name) {
 						if (!mm) {
 							name = "[vdso]";
