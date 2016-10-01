@@ -98,8 +98,7 @@ struct r2k_control_reg {
 struct r2k_proc_info {
 	pid_t pid;
 	char comm[16]; //TASK_COMM_LEN = 16 include/linux/sched.h
-	//struct vmareastruct *memmap; //list_head of vmareastruct
-	unsigned long vmareastruct[1024]; // Eacm vmap is of 3 elements; start, end, pgprot
+	unsigned long vmareastruct[4096];
 };
 
 #define R2_READ_REG 0x4

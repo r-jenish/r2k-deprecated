@@ -26,7 +26,7 @@ struct r2k_control_reg {
 struct r2k_proc_info {
 	int pid;
 	char comm[16];
-	unsigned long vmareastruct[1024];
+	unsigned long vmareastruct[4096];
 };
 
 #define R2_READ_REG 0x4
@@ -71,15 +71,21 @@ int main (int argc, char **argv) {
 	ret = ioctl (fd, ioctl_n, &data);
 	if (ret == 0) {
 		printf ("pid = %d\nname = %s\n", data.pid, data.comm);
-		for (i = 0; i < 1024; i += 3) {
+		for (i = 0; i < 4096;) {
 			if (data.vmareastruct[i] == 0 && data.vmareastruct[i+1] == 0) {
-				continue;
+				break;;
 			}
-			printf ("%08lx-%08lx %c%c%c%c\n", data.vmareastruct[i], data.vmareastruct[i+1],
+			printf ("%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu",
+					data.vmareastruct[i], data.vmareastruct[i+1],
 					data.vmareastruct[i+2] & VM_READ ? 'r' : '-',
 					data.vmareastruct[i+2] & VM_WRITE ? 'w' : '-',
 					data.vmareastruct[i+2] & VM_EXEC ? 'x' : '-',
-					data.vmareastruct[i+2] & VM_MAYSHARE ? 's' : 'p');
+					data.vmareastruct[i+2] & VM_MAYSHARE ? 's' : 'p',
+					data.vmareastruct[i+3], data.vmareastruct[i+4],
+					data.vmareastruct[i+5], data.vmareastruct[i+6]);
+			i += 7;
+			printf ("\t\t\t\t\t\t%s\n", &(data.vmareastruct[i]));
+			i += (strlen(&(data.vmareastruct[i])) - 1 + sizeof (unsigned long)) / sizeof (unsigned long);
 		}
 	} else if (ret == 12) {
 		printf ("OUT OF MEMORY\n");

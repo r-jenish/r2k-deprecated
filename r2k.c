@@ -66,6 +66,11 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 			struct task_struct *task = NULL;
 			struct mm_struct *mm = NULL;
 			struct vm_area_struct *vma = NULL;
+			struct file *file = NULL;
+			dev_t dev = 0;
+			unsigned long ino = 0;
+			unsigned long long pgoff = 0;
+			char *name = NULL;
 
 			data = kmalloc (sizeof (*data), GFP_KERNEL);
 			if (!data) {
@@ -90,25 +95,102 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 			mm = task->mm;
 			vma = mm ? mm->mmap : NULL;
 
-			get_task_comm (data->comm, task);
+			//get_task_comm (data->comm, task);
+			task_lock(task);
+			strncpy (data->comm, task->comm, sizeof (task->comm));
+			task_unlock(task);
 
-		    if (vma) {
+			if (vma) {
 				counter = 0;
 				for (; vma; vma = vma->vm_next) {
-					if (counter + 3 > 1024) {
-						kfree (data);
-						return -ENOMEM;
+					if (counter + 7 > sizeof (data->vmareastruct)) {
+						ret = -ENOMEM;
+						goto out;
 					}
+
+					file = NULL;
+					name = NULL;
+					pgoff = 0;
+					ino = 0;
+					dev = 0;
+					file = vma->vm_file;
+					if (file) {
+						struct inode *inode = NULL;
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3,8,0)
+						inode = file_inode (vma->vm_file);
+#else
+						inode = vma->vm_file->f_path.dentry->d_inode;
+#endif
+						dev = inode->i_sb->s_dev;
+						ino = inode->i_ino;
+						pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
+					}
+
 					data->vmareastruct[counter] = vma->vm_start;
+					data->vmareastruct[counter+1] = vma->vm_end;
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,38)
 					if (stack_guard_page_start (vma, vma->vm_start)) {
 						data->vmareastruct[counter] += PAGE_SIZE;
 					}
-					data->vmareastruct[counter+1] = vma->vm_end;
 					if (stack_guard_page_end (vma, vma->vm_end)) {
 						data->vmareastruct[counter+1] -= PAGE_SIZE;
 					}
+#elif LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,38) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
+					if (vma->vm_flags & VM_GROWSDOWN) {
+						if (!vma_stack_continue (vma->vm_prev, vma->vm_start)) {
+							data->vmareastruct[counter] += PAGE_SIZE;
+						}
+					}
+#endif
 					data->vmareastruct[counter+2] = vma->vm_flags;
-					counter += 3;
+					data->vmareastruct[counter+3] = pgoff;
+					data->vmareastruct[counter+4] = MAJOR(dev);
+					data->vmareastruct[counter+5] = MINOR(dev);
+					data->vmareastruct[counter+6] = ino;
+					counter += 7;
+
+					if (file) {
+						name = file->f_path.dentry->d_iname;
+						goto write_name;
+					}
+
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3,15,0)
+					if (vma->vm_ops && vma->vm_ops->name) {
+						name = (char *)vma->vm_ops->name (vma);
+						if (name) {
+							goto write_name;
+						}
+					}
+#endif
+
+					name = (char *)arch_vma_name (vma);
+					if (!name) {
+						if (!mm) {
+							name = "[vdso]";
+						} else if (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) {
+							name = "[heap]";
+						} else if (vma->vm_start <= mm->start_stack && vma->vm_end >= mm->start_stack) {
+							name = "[stack]";
+						}
+					}
+
+				write_name:
+					if (name) {
+						//char *dest = (char *)(&(data->vmareastruct[counter]));
+						int i = 0;
+						while (counter * sizeof (unsigned long) + i < sizeof (data->vmareastruct)) {
+							*(char *)(((char *)(data->vmareastruct) + counter * sizeof (unsigned long)) + i) = *(char *)(name + i);
+							if (*(char *)(name + i) == 0) {
+								break;
+							}
+							i += 1;
+						}
+						if (counter * sizeof (unsigned long) + i >= sizeof (data->vmareastruct)) {
+							ret = -ENOMEM;
+							goto out;
+						}
+						counter += (i + sizeof (unsigned long) - 1) / sizeof (unsigned long);
+					}
 				}
 			}
 
@@ -116,6 +198,7 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 			if (ret) {
 				ret = -EFAULT;
 			}
+		out:
 			kfree (data);
 			break;
 		}
