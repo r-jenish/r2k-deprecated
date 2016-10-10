@@ -27,6 +27,7 @@ struct r2k_proc_info {
 	int pid;
 	char comm[16];
 	unsigned long vmareastruct[4096];
+	unsigned long stack;
 };
 
 #define R2_READ_REG 0x4
@@ -87,7 +88,8 @@ int main (int argc, char **argv) {
 			printf ("\t\t%s\n", &(data.vmareastruct[i]));
 			i += (strlen(&(data.vmareastruct[i])) - 1 + sizeof (unsigned long)) / sizeof (unsigned long);
 		}
-	} else if (ret == 12) {
+	    printf ("STACK = %p\n", (void *)data.stack);
+	} else {
 		printf ("OUT OF MEMORY\n");
 	}
 

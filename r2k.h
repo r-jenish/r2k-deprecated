@@ -14,6 +14,9 @@
 #include <linux/slab.h>
 #include <linux/pid.h>
 #include <linux/mm_types.h>
+#include <linux/mutex.h>
+#include <linux/ptrace.h>
+#include <linux/stacktrace.h>
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0))
 #include <asm/special_insns.h>
@@ -78,8 +81,6 @@
 */
 #endif
 
-//TODO: Everything above need tests.
-
 static char R2_TYPE = 'k';
 
 struct r2k_control_reg {
@@ -95,10 +96,13 @@ struct r2k_control_reg {
 #endif
 };
 
+
+//fails for kernel 3.15 x86
 struct r2k_proc_info {
 	pid_t pid;
 	char comm[16]; //TASK_COMM_LEN = 16 include/linux/sched.h
 	unsigned long vmareastruct[4096];
+	unsigned long stack;
 };
 
 #define R2_READ_REG 0x4
