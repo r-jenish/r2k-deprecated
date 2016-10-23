@@ -19,9 +19,9 @@ static int write_vmareastruct (struct vm_area_struct *vma, struct mm_struct *mm,
 	if (file) {
 		struct inode *inode = NULL;
 #if LINUX_VERSION_CODE > KERNEL_VERSION(3,8,0)
-		inode = file_inode (vma->vm_file);
+		inode = file_inode (file);
 #else
-		inode = vma->vm_file->f_path.dentry->d_inode;
+		inode = file->f_path.dentry->d_inode;
 #endif
 		dev = inode->i_sb->s_dev;
 		ino = inode->i_ino;

@@ -14,9 +14,6 @@
 #include <linux/slab.h>
 #include <linux/pid.h>
 #include <linux/mm_types.h>
-#include <linux/mutex.h>
-#include <linux/ptrace.h>
-#include <linux/stacktrace.h>
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0))
 #include <asm/special_insns.h>
