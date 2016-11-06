@@ -42,7 +42,6 @@
 #else
 #define native_read_cr4_safe read_cr4
 #endif	/* defined as it is in 2.6.16 */
-#endif
 
 #ifdef CONFIG_X86_64
 #define native_read_cr8 read_cr8
@@ -71,6 +70,7 @@
 	__dummy;			\
 })
 #endif	/* defined as it is in 2.6.16 */
+#endif
 
 /*
 #elif KERNEL_VERSION(2,6,14) > LINUX_VERSION_CODE && LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
