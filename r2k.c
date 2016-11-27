@@ -116,9 +116,8 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 		{
 			// TESTED ON: linx kernel 3.16.0-4-686-pae x86 arch
 			struct r2k_control_reg __user *data = NULL;
-#if (defined(CONFIG_X86_32) || defined(CONFIG_X86_64))
 			data = (struct r2k_control_reg __user *)data_addr;
-
+#if (defined(CONFIG_X86_32) || defined(CONFIG_X86_64))
 			val = native_read_cr0 ();
 			ret = copy_to_user ((unsigned long *)(&(data->cr0)), &val, reg_size);
 			if (ret) {
@@ -147,6 +146,63 @@ static long io_ioctl (struct file *file, unsigned int cmd, unsigned long data_ad
 			val = native_read_cr8 ();
 			ret = copy_to_user ((unsigned long *)(&(data->cr8)), &val, reg_size);
 #endif
+
+#elif (defined (CONFIG_ARM))
+			val = read_ttbr0 ();
+			ret = copy_to_user ((unsigned long *)(&(data->ttbr0)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_ttbr0 failed\n");
+				return -EINVAL;
+			}
+			val = read_ttbr1 ();
+			ret = copy_to_user ((unsigned long *)(&(data->ttbr1)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_ttbr1 failed\n");
+				return -EINVAL;
+			}
+			val = read_ttbcr ();
+			ret = copy_to_user ((unsigned long *)(&(data->ttbcr)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_ttbcr failed\n");
+				return -EINVAL;
+			}
+			val = read_c1 ();
+			ret = copy_to_user ((unsigned long *)(&(data->c1)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_c1 failed\n");
+				return -EINVAL;
+			}
+			val = read_c3 ();
+			ret = copy_to_user ((unsigned long *)(&(data->c3)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_c3 failed\n");
+				return -EINVAL;
+			}
+#elif (defined (CONFIG_ARM64))
+			val = read_sctlr_EL1 ();
+			ret = copy_to_user ((unsigned long *)(&(data->sctlr_el1)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_sctlr_el1 failed\n");
+				return -EINVAL;
+			}
+			val = read_ttbr0_EL1 ();
+			ret = copy_to_user ((unsigned long *)(&(data->ttbr0_el1)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_ttbr0_el1 failed\n");
+				return -EINVAL;
+			}
+			val = read_ttbr1_EL1 ();
+			ret = copy_to_user ((unsigned long *)(&(data->ttbr1_el1)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_ttbr1_el1 failed\n");
+				return -EINVAL;
+			}
+			val = read_tcr_EL1 ();
+			ret = copy_to_user ((unsigned long *)(&(data->tcr_el1)), &val, reg_size);
+			if (ret) {
+				pr_info ("ERROR: copy_to_tcr_el1 failed\n");
+				return -EINVAL;
+			}
 #endif
 			break;
 		}

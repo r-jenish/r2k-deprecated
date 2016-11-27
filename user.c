@@ -20,6 +20,17 @@ struct r2k_control_reg {
 #ifdef __amd64__
 	unsigned long cr8;
 #endif
+#elif defined(__arm__)
+	unsigned long ttbr0;
+	unsigned long ttbr1;
+	unsigned long ttbcr;
+	unsigned long c1;
+	unsigned long c3;
+#elif defined(__aarch64__)
+	unsigned long sctlr_el1;
+	unsigned long ttbr0_el1;
+	unsigned long ttbr1_el1;
+	unsigned long tcr_el1;
 #endif
 };
 
@@ -42,8 +53,8 @@ int main (int argc, char **argv) {
 	int fd, ret;
 	unsigned int ioctl_n;
 	char *devicename = "/dev/r2";
-	//struct r2k_control_reg data;
-	struct r2k_proc_info data;
+	struct r2k_control_reg data;
+	//struct r2k_proc_info data;
 	int i;
 
 	fd = open (devicename, O_RDONLY);
@@ -52,20 +63,22 @@ int main (int argc, char **argv) {
 		return -1;
 	}
 
-#if 0
 	ioctl_n = READ_CONTROL_REG;
 	ret = ioctl (fd, ioctl_n, &data);
 
-	data.cr1 = 0;
-
 #ifdef __i386__
+	data.cr1 = 0;
 	printf ("cr0 = %p\ncr1 = %p\ncr2 = %p\ncr3 = %p\ncr4 = %p\n", (void *)data.cr0, (void *)data.cr1, (void *)data.cr2, (void *)data.cr3, (void *)data.cr4);
 #elif defined(__amd64__)
+	data.cr1 = 0;
 	printf ("cr0 = %p\ncr1 = %p\ncr2 = %p\ncr3 = %p\ncr4 = %p\ncr8 = %p\n", (void *)data.cr0, (void *)data.cr1, (void *)data.cr2, (void *)data.cr3, (void *)data.cr4, (void *)data.cr8);
+#elif defined(__arm__)
+	printf ("ttbr0 = %p\nttbr1 = %p\nttbcr = %p\nc1 = %p\nc3 = %p\n", (void *)data.ttbr0, (void *)data.ttbr1, (void *)data.ttbcr, (void *)data.c1, (void *)data.c3);
+#elif defined(__aarch64__)
+	printf ("sctlr_el1 = %p\nttbr0_el1 = %p\nttbr1_el1 = %p\ntcr_el1 = %p\n", (void *)data.sctlr_el1, (void *)data.ttbr0_el1, (void *)data.ttbr1_el1, (void *)data.tcr_el1);
 #endif
 
-#endif //close #if 0
-
+#if 0
 	ioctl_n = READ_PROCESS_INFO;
 	printf ("pid: ");
 	scanf ("%d", &(data.pid));
@@ -92,7 +105,7 @@ int main (int argc, char **argv) {
 	} else {
 		printf ("OUT OF MEMORY\n");
 	}
-
+#endif
 	close (fd);
 
 	return 0;

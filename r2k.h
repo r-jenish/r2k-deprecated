@@ -82,8 +82,9 @@
 
 static char R2_TYPE = 'k';
 
-struct r2k_control_reg {
+
 #if defined(CONFIG_X86_32) || defined(CONFIG_X86_64)
+struct r2k_control_reg {
 	unsigned long cr0;
 	unsigned long cr1; //Register Not used. What to do?
 	unsigned long cr2;
@@ -92,8 +93,8 @@ struct r2k_control_reg {
 #ifdef CONFIG_X86_64
 	unsigned long cr8;
 #endif
-#endif
 };
+#endif
 
 
 //fails for kernel 3.15 x86
@@ -107,10 +108,128 @@ struct r2k_proc_info {
 #define R2_READ_REG 0x4
 #define R2_PROC_INFO 0x8
 
-#if defined(CONFIG_X86_32)
+#if defined(CONFIG_X86_32) || defined(CONFIG_ARM)
 #define reg_size 4
-#elif defined(CONFIG_X86_64)
+#elif defined(CONFIG_X86_64) || defined(CONFIG_ARM64)
 #define reg_size 8
+#endif
+
+#if defined (CONFIG_ARM)
+struct r2k_control_reg {
+	unsigned long ttbr0;
+	unsigned long ttbr1;
+	unsigned long ttbcr;
+	unsigned long c1;
+	unsigned long c3;
+};
+
+#define read_ttbr0() ({				\
+	unsigned long __dummy;			\
+	__asm__ ("mrc p15, 0, %0, c2, c0, 0":	\
+		 "=r" (__dummy));		\
+	__dummy;				\
+})
+
+#define read_ttbr1() ({ 			\
+	unsigned long __dummy;			\
+	__asm__ ("mrc p15, 0, %0, c2, c0, 1":	\
+		 "=r" (__dummy));		\
+	__dummy;				\
+})
+
+#define read_ttbcr() ({				\
+	unsigned long __dummy;			\
+	__asm__ ("mrc p15, 0, %0, c2, c0, 2":	\
+		 "=r" (__dummy));		\
+	__dummy;				\
+})
+
+#define read_c1() ({				\
+	unsigned long __dummy;			\
+	__asm__ ("mrc p15, 0, %0, c1, c0, 0":	\
+		 "=r" (__dummy));		\
+	__dummy;				\
+})
+
+#define read_c3() ({				\
+	unsigned long __dummy;			\
+	__asm__ ("mrc p15, 0, %0, c3, c0, 0":	\
+		 "=r" (__dummy));		\
+	__dummy;				\
+})
+
+#elif defined (CONFIG_ARM64)
+struct r2k_control_reg {
+	unsigned long sctlr_el1;
+	unsigned long ttbr0_el1;
+	unsigned long ttbr1_el1;
+	unsigned long tcr_el1;
+};
+#define read_sctlr_EL1() ({		\
+	unsigned long __dummy;		\
+	__asm__ ("MRS %0, SCTLR_EL1":	\
+		 "=r" (__dummy));	\
+	__dummy;			\
+})
+
+#define read_ttbr0_EL1() ({		\
+	unsigned long __dummy;		\
+	__asm__ ("MRS %0, TTBR0_EL1":	\
+		 "=r" (__dummy));	\
+	__dummy;			\
+})
+
+#define read_ttbr1_EL1() ({		\
+	unsigned long __dummy;		\
+	__asm__ ("MRS %0, TTBR1_EL1":	\
+		 "=r" (__dummy));	\
+	__dummy;			\
+})
+
+#define read_tcr_EL1() ({		\
+	unsigned long __dummy;		\
+	__asm__ ("MRS %0, TCR_EL1": 	\
+		 "=r" (__dummy));	\
+	__dummy;			\
+})
+
+#if 0
+#define read_sctlr_EL2() ({    \
+			unsigned long __dummy;    \
+			__asm__ ("MRS %0, SCTLR_EL2":    \
+					 "=r" (__dummy));    \
+			__dummy;    \
+})
+
+#define read_sctlr_EL3() ({    \
+			unsigned long __dummy;    \
+			__asm__ ("MRS %0, SCTLR_EL3":    \
+					 "=r" (__dummy));    \
+			__dummy;    \
+})
+
+#define read_ttbr0_EL3() ({    \
+			unsigned long __dummy;    \
+			__asm__ ("MRS %0, TTBR0_EL3":    \
+					 "=r" (__dummy));    \
+			__dummy;    \
+})
+
+#define read_tcr_EL2() ({    \
+			unsigned long __dummy;    \
+			__asm__ ("MRS %0, TCR_EL2":    \
+					 "=r" (__dummy));    \
+			__dummy;    \
+})
+
+#define read_tcr_EL3() ({    \
+			unsigned long __dummy;    \
+			__asm__ ("MRS %0, TCR_EL3":    \
+					 "=r" (__dummy));    \
+			__dummy;    \
+})
+#endif //end if 0
+
 #endif
 
 #endif
