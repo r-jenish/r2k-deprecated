@@ -2,7 +2,7 @@
 
 static struct cdev *r2_dev;
 static dev_t dev;
-static char *r2_devname = "r2";
+static char *r2_devname = "r2k";
 
 static int write_vmareastruct (struct vm_area_struct *vma, struct mm_struct *mm, struct r2k_proc_info *data, unsigned long *count) {
 	struct file *file = vma->vm_file;
